@@ -108,7 +108,31 @@ The Starlink dish exposes an **unauthenticated** gRPC server at `192.168.100.1:9
 - GPS location requires opt-in: Starlink app > Settings > Advanced > Debug Data
 - The dish's 192.168.100.1 address is not configurable
 
-If you're behind a third-party router, ensure the WAN interface is connected to the Starlink Ethernet Adapter and that routing to `192.168.100.1/32` is configured.
+### Starlink router (default)
+
+Works out of the box. The dish, router, and your devices are all on the same network.
+
+### Third-party router in bypass mode (UniFi, pfSense, etc.)
+
+In bypass mode, the Starlink router hands its CGNAT WAN IP to your router's WAN interface. The dish management interface (`192.168.100.1`) sits on a **separate `/24` subnet** on the WAN side — your router won't know how to reach it without a static route.
+
+**Static route configuration (UniFi example):**
+
+UniFi Network > Settings > Routing > Static Routes:
+
+| Field | Value |
+|-------|-------|
+| Destination | `192.168.100.0/24` |
+| Next Hop | WAN interface (Starlink-facing port) |
+| Distance | 1 |
+
+Some router firmware also requires a secondary IP on the WAN interface in the `192.168.100.0/24` range (e.g. `192.168.100.2/24`) for traffic to egress on that subnet. This depends on whether your firmware handles interface-scoped routes correctly — UniFi has been inconsistent here across versions.
+
+Once the route is in place, both `192.168.100.1:9200` (gRPC) and `192.168.100.1:80` (Starlink web UI) become reachable from your LAN.
+
+### Remote / headless sites
+
+Run the MCP server on any host that can reach `192.168.100.1` — a local machine, a container on a NAS, or any device on the Starlink-connected network.
 
 ## Security Model
 
