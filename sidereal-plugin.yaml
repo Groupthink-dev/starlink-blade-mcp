@@ -1,114 +1,75 @@
 name: starlink-blade-mcp
-display_name: Starlink
-description: >
-  Local-first Starlink dish monitoring and control via gRPC.
-  Dish status, signal quality, obstruction mapping, throughput history,
-  GPS location, diagnostics, and dish control (reboot, stow, unstow)
-  with token-efficient statistical summaries.
+version: "0.1.0"
+description: "Local-first Starlink dish monitoring and control via gRPC. Dish status, signal quality, obstruction mapping, throughput history, GPS location, diagnostics, and dish control (reboot, stow, unstow) with token-efficient statistical summaries."
 author: groupthink-dev
-version: 0.1.0
-license: MIT
-homepage: https://github.com/groupthink-dev/starlink-blade-mcp
-repository: https://github.com/groupthink-dev/starlink-blade-mcp
+licence: MIT
 tier: certified
 author_type: first-party
 readiness: stub
+homepage: https://github.com/groupthink-dev/starlink-blade-mcp
+contract: leo-modem-v1
 
-contract: isp-v1
-multi_instance: false
+services:
+  starlink:
+    status: starlink_status
+    alerts: starlink_alerts
+    obstruction: starlink_obstruction
+    history: starlink_history
+    location: starlink_location
+    diagnostics: starlink_diagnostics
+    reboot: starlink_reboot
+    stow: starlink_stow
+    unstow: starlink_unstow
 
-runtime:
-  command: uv
-  args:
-    - --directory
-    - "{{install_path}}"
-    - run
-    - starlink-blade-mcp
-  transport: stdio
+install:
+  runtime: uv
+  package: starlink-blade-mcp
 
-auth:
-  model: none
+setup:
+  auth_model: none
+  complexity: trivial
+  icon: "antenna.radiowaves.left.and.right"
+  product: "Starlink Dish"
+  blurb: "Monitor and control your Starlink dish over the local network. No cloud API or credentials required."
   fields:
     - key: STARLINK_DISH_ADDRESS
-      label: Dish Address
+      label: "Dish Address"
       type: string
+      secret: false
       required: false
-      default: "192.168.100.1:9200"
-      help: "gRPC endpoint of the Starlink dish (default: 192.168.100.1:9200)"
-    - key: STARLINK_TIMEOUT
-      label: Timeout
-      type: number
-      required: false
-      default: "10"
-      help: gRPC timeout in seconds
+      placeholder: "192.168.100.1:9200"
+      help: "Only change if your dish is at a non-standard address (rare)."
     - key: STARLINK_WRITE_ENABLED
-      label: Enable Write Operations
+      label: "Enable Dish Control"
       type: boolean
       required: false
-      default: "false"
-      help: Enable reboot, stow, and unstow commands
+      help: "Allow reboot, stow, and unstow commands. All control operations require additional per-call confirmation."
+  test:
+    endpoint: "grpc://192.168.100.1:9200"
+    auth_style: none
+  prerequisites:
+    - "Starlink dish on local network"
+    - "Route to 192.168.100.1 (automatic with Starlink router)"
+  help:
+    - label: "Starlink Network Setup"
+      url: "https://support.starlink.com/topic?category=6"
+    - label: "Bypass Mode / Third-Party Router"
+      url: "https://support.starlink.com/topic?category=19"
 
-test:
-  command: uv
-  args:
-    - --directory
-    - "{{install_path}}"
-    - run
-    - pytest
-    - tests/
-    - -m
-    - not e2e
-    - -v
-
-tools:
-  - name: starlink_status
-    description: "Dish identity, connectivity, signal quality, orientation, uptime"
-    read_only: true
-  - name: starlink_alerts
-    description: "Active alert flags (22 types) with human-readable descriptions"
-    read_only: true
-  - name: starlink_obstruction
-    description: "Obstruction fraction, 12-wedge directional map, timing"
-    read_only: true
-  - name: starlink_history
-    description: "Throughput/latency/power as min/avg/max summary (configurable window)"
-    read_only: true
-  - name: starlink_location
-    description: "GPS coordinates (requires opt-in in Starlink app)"
-    read_only: true
-  - name: starlink_diagnostics
-    description: "Hardware version, firmware, GPS satellites, alert count"
-    read_only: true
-  - name: starlink_reboot
-    description: "Restart the dish (2-5 min downtime)"
-    read_only: false
-    write_gate: STARLINK_WRITE_ENABLED
-  - name: starlink_stow
-    description: "Stow dish face-down for storage/transport"
-    read_only: false
-    write_gate: STARLINK_WRITE_ENABLED
-  - name: starlink_unstow
-    description: "Resume normal satellite tracking"
-    read_only: false
-    write_gate: STARLINK_WRITE_ENABLED
+env:
+  - name: STARLINK_DISH_ADDRESS
+    description: "Dish gRPC endpoint (default: 192.168.100.1:9200)"
+    secret: false
+    default: "192.168.100.1:9200"
+  - name: STARLINK_TIMEOUT
+    description: "gRPC timeout in seconds"
+    secret: false
+    default: "10"
+  - name: STARLINK_WRITE_ENABLED
+    description: "Enable dish control operations (reboot, stow, unstow)"
+    secret: false
+    default: "false"
 
 conformance:
   required: "0/0"
-  recommended: "0/0"
-  optional: "0/0"
-  gated: "0/0"
   last_tested: ""
-
-help:
-  setup: |
-    1. Ensure the Starlink dish is reachable on the local network (default: 192.168.100.1)
-    2. No credentials are required — the dish gRPC interface is unauthenticated
-    3. If using a third-party router in bypass mode, add a static route to 192.168.100.0/24
-    4. For GPS location, enable debug data in the Starlink app (Settings > Advanced > Debug Data)
-    5. Write operations (reboot, stow, unstow) are disabled by default — enable only if needed
-  troubleshooting: |
-    - "Connection refused": Ensure the dish is powered on and reachable at the configured address
-    - "Timeout": Increase STARLINK_TIMEOUT or check network route to 192.168.100.1
-    - GPS "unavailable": Enable debug data sharing in the Starlink app
-    - No route to dish: In bypass mode, add a static route — see README for router-specific instructions
-    - Reboot/stow refused: Set STARLINK_WRITE_ENABLED=true and pass confirm=true
