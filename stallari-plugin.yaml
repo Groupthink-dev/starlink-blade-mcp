@@ -5,12 +5,12 @@ author: groupthink-dev
 licence: MIT
 tier: certified
 author_type: first-party
-readiness: stub
+readiness: production
 homepage: https://github.com/groupthink-dev/starlink-blade-mcp
 contract: leo-modem-v1
 
 services:
-  starlink:
+  leo-modem:
     status: starlink_status
     alerts: starlink_alerts
     obstruction: starlink_obstruction
@@ -71,5 +71,7 @@ env:
     default: "false"
 
 conformance:
-  required: "0/0"
-  last_tested: ""
+  required: "5/5"
+  recommended: "1/1"
+  gated: "2/3"
+  last_tested: "2026-04-18"
