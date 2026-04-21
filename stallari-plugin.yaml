@@ -1,5 +1,5 @@
 name: starlink-blade-mcp
-version: "0.1.0"
+version: "0.1.1"
 description: "Local-first Starlink dish monitoring and control via gRPC. Dish status, signal quality, obstruction mapping, throughput history, GPS location, diagnostics, and dish control (reboot, stow, unstow) with token-efficient statistical summaries."
 author: groupthink-dev
 licence: MIT
